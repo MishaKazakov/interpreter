@@ -1,7 +1,7 @@
 
 import sys
 from imp_lexer import *
-from rpn import *    
+# from rpn import *    
 
 
 def next_items(term, not_term,generator):
@@ -236,4 +236,4 @@ if __name__ == '__main__':
                     break
                 print(not_term)
                 
-    #print(generator)
+    print(generator)
