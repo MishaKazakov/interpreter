@@ -2,7 +2,9 @@
 import sys
 from imp_lexer import *
 # from rpn import *    
-
+global else_flag
+global if_flag
+global if_end_flag
 def get_priority(priorities_list,op):
     for i in range(len(priorities_list)):
         if priorities_list[i].count(op):
@@ -14,7 +16,7 @@ def priorities(op1, op2):
         ['+', '-'],
         ['('],[')'],
         [':=', 'mem1', 'mem2'],
-        ['<', '>', '=', '!=', 'jf', 'j', 'tag1', 'tag2']
+        ['<', '>', '=', '!=', 'jf', 'j', 'tag1', 'tag2', 'while_tag1', 'while_tag2']
     ]
     priority1 = get_priority(priorities_list, op1)
     priority2 = get_priority(priorities_list, op2)
@@ -41,40 +43,50 @@ def generator_new_item(generator,operation_generator, term):
             operation_generator.append(term)
 
 def generator_end(generator,operation_generator):
+    global else_flag
+    global if_end_flag
     for i in range(len(operation_generator)):
         generator.append(operation_generator.pop())
-    print(generator)
-    generator.clear()
+    if else_flag:
+        after_else(generator)
+        else_flag = False
+    if if_end_flag:
+        end_of_if(generator)
+        if_end_flag = False
     operation_generator.clear()
 
 def if_required(generator, operation_generator):
     generator_new_item(generator,operation_generator, ('tag2', 'go_next'))
     generator_new_item(generator,operation_generator, ('j', 'RESERVED'))
     
-
-def end_of_if(generator, operation_generator):
-    if_required(generator, operation_generator)
+def end_of_if(generator):
     position = generator.index(('tag1', 'RESERVED'))
-    generator[position] = ('tag1', 'go_next')
+    generator[position] = ('tag1', len(generator))
 
 def else_postion(generator,operation_generator):
     if_required(generator, operation_generator)
     position = generator.index(('tag1', 'RESERVED'))
     generator[position] = ('tag1', len(generator))
 
-global if_flag
+def after_else(generator):
+    position = generator.index(('tag2', 'go_next'))
+    generator[position] = ('tag2', len(generator)) #might be a problem with mytipal
 
 def next_items(term, not_term,generator, operation_generator):
     global if_flag
+    global else_flag
+    global if_end_flag
     if not_term[0] == 'P':
+        else_flag = False
+        if_end_flag = False
         if term[0][0] == 'num':
-            operation_generator.append(term)
+            operation_generator.append(term[0])
             return 'R', 'P'
         elif term[0][0] == 'arr':
-            operation_generator.append(term)
+            operation_generator.append(term[0])
             return ['R', 'P']
         elif term[0][0] == 'mtx':
-            operation_generator.append(term)
+            operation_generator.append(term[0])
             return ['R', 'P']
         elif term[0][0] == '{':
             return ['A','Q','endOfMain']
@@ -162,10 +174,11 @@ def next_items(term, not_term,generator, operation_generator):
             return ['tryNextTerm']
     elif not_term[0] == 'E':
         if term[0][0] == 'else':
+            else_flag = True
             else_postion(generator, operation_generator)
             return ['A']
         else:
-            end_of_if(generator, operation_generator)
+            if_end_flag = True
             return ['tryNextTerm']
     elif not_term[0] == 'C':
         if term[0][0] == '(':
@@ -304,7 +317,7 @@ def next_items(term, not_term,generator, operation_generator):
             return ['deleteTerm']
         else:
             return ['Error', term]
-    elif not_term[0] == 'Z':
+    elif not_term[0] == 'Z':            
         return ['tryNextTerm']
     return ['Error', term]
 
@@ -353,3 +366,4 @@ if __name__ == '__main__':
                     Error = True
                     break
                 a = [[('a', 'ID')], ('b', 'ID'), [('num', 'RESERVED')]]
+    print(generator)
