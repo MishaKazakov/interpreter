@@ -5,6 +5,9 @@ from imp_lexer import *
 global else_flag
 global if_flag
 global if_end_flag
+global while_flag
+global num_while
+
 def get_priority(priorities_list,op):
     for i in range(len(priorities_list)):
         if priorities_list[i].count(op):
@@ -42,18 +45,36 @@ def generator_new_item(generator,operation_generator, term):
         else:
             operation_generator.append(term)
 
-def generator_end(generator,operation_generator):
+def generator_end(generator, operation_generator, tag_stack, while_stack):
     global else_flag
     global if_end_flag
+    global while_flag 
+
     for i in range(len(operation_generator)):
         generator.append(operation_generator.pop())
-    if else_flag:
+    if len(else_flag) != 0:
         after_else(generator)
-        else_flag = False
-    if if_end_flag:
+        else_flag.pop()
+    if len(if_end_flag) != 0:
         end_of_if(generator)
-        if_end_flag = False
+        if_end_flag.pop()
+    if len(while_flag) != 0:
+        end_of_while(generator, tag_stack, while_stack)
+        while_flag.pop()
+    if len(while_stack) == num_while:
+        put_while_end_poistion(generator, while_stack, num_while)
     operation_generator.clear()
+
+def end_of_while(generator, tag_stack, while_stack):
+    position = generator.index(('while_tag1', 'RESERVED'))
+    generator.append(('while_tag2', tag_stack.pop()))
+    generator.append(('j', 'RESERVED'))
+    while_stack.append(len(generator))
+
+def put_while_end_poistion(generator, while_stack, num_while):
+    for i in range(num_while):
+        position = generator.index(('while_tag1', 'RESERVED'))
+        generator[position] = ('while_tag1', while_stack.pop())
 
 def if_required(generator, operation_generator):
     generator_new_item(generator,operation_generator, ('tag2', 'go_next'))
@@ -61,24 +82,29 @@ def if_required(generator, operation_generator):
     
 def end_of_if(generator):
     position = generator.index(('tag1', 'RESERVED'))
-    generator[position] = ('tag1', len(generator))
+    generator[position] = ('tag1', len(generator)) #rewrite
 
 def else_postion(generator,operation_generator):
     if_required(generator, operation_generator)
     position = generator.index(('tag1', 'RESERVED'))
-    generator[position] = ('tag1', len(generator))
+    generator[position] = ('tag1', len(generator)) #rewrite
 
 def after_else(generator):
     position = generator.index(('tag2', 'go_next'))
-    generator[position] = ('tag2', len(generator)) #might be a problem with mytipal
+    generator[position] = ('tag2', len(generator)) #rewrite
 
-def next_items(term, not_term,generator, operation_generator):
+def next_items(term, not_term,generator, operation_generator, tag_stack, while_stack):
     global if_flag
     global else_flag
     global if_end_flag
+    global while_flag
+    global num_while
     if not_term[0] == 'P':
-        else_flag = False
-        if_end_flag = False
+        else_flag = []
+        if_end_flag = []
+        if_flag = []
+        while_flag = []
+        num_while = 0
         if term[0][0] == 'num':
             operation_generator.append(term[0])
             return 'R', 'P'
@@ -94,12 +120,13 @@ def next_items(term, not_term,generator, operation_generator):
             return ['Error', term]
     elif not_term[0] == 'endOfBody':
         if term[0][0] == '}':
+            generator_end(generator, operation_generator, tag_stack, while_stack)
             return ['deleteTerm']
         else:
             return ['Error', 'not closed bracket']
     elif not_term[0] == 'endOfMain':
         if term[0][0] == '}':
-            generator_end(generator, operation_generator)
+            generator_end(generator, operation_generator, tag_stack, while_stack)
             return ['end']
         else:
             return ['Error', 'not closed bracket in the main']
@@ -116,23 +143,29 @@ def next_items(term, not_term,generator, operation_generator):
         elif len(term) == 1 and term[0][0] == ',':
             return ['getNext', 'M']
         elif term[0][0] == ';':
-            generator_end(generator, operation_generator)
+            generator_end(generator, operation_generator, tag_stack, while_stack)
             #rpn execute
             return ['deleteTerm']
         else:
             return ['Error', term]
     elif not_term[0] == 'A':
+        if len(if_flag) != 0:
+            for i in range(len(operation_generator)):
+                generator.append(operation_generator.pop())
+            if_flag.pop()
         if term[0][0] == '{':
-            if if_flag:
-                for i in range(len(operation_generator)):
-                    generator.append(operation_generator.pop())
-                if_flag = False
             return ['A','Q', 'endOfBody']
         elif term[0][0] == 'if':
             operation_generator.append(('jf', 'RESERVED'))
             operation_generator.append(('tag1', 'RESERVED'))
             return ['C', 'A', 'E', 'Z']
         elif term[0][0] == 'while':
+            operation_generator.append(('jf', 'RESERVED'))
+            operation_generator.append(('while_tag1', 'RESERVED'))
+            if_flag.append(1)
+            while_flag.append(1)
+            tag_stack.append(len(generator))
+            num_while = num_while + 1
             return ['C', 'A', 'Z']
         elif term[0][0] == 'in' and len(term) == 1:
             return ['getNext', 'A']
@@ -168,17 +201,17 @@ def next_items(term, not_term,generator, operation_generator):
             return ['Error', 'assignment']
     elif not_term[0] == 'Q':
         if term[0][0] == ';':
-            generator_end(generator, operation_generator)
+            generator_end(generator, operation_generator, tag_stack, while_stack)
             return ['A', 'Q']
         else:
             return ['tryNextTerm']
     elif not_term[0] == 'E':
         if term[0][0] == 'else':
-            else_flag = True
+            else_flag.append(1)
             else_postion(generator, operation_generator)
             return ['A']
         else:
-            if_end_flag = True
+            if_end_flag.append(1)
             return ['tryNextTerm']
     elif not_term[0] == 'C':
         if term[0][0] == '(':
@@ -204,7 +237,7 @@ def next_items(term, not_term,generator, operation_generator):
         else:
             return ['Error', term]
     elif not_term[0] == 'D':
-        if_flag = True
+        if_flag.append(1)
         if term[0][0] == '<':
             operation_generator.append(term[0])
             return ['S', 'Z']
@@ -333,6 +366,8 @@ if __name__ == '__main__':
         terms = []
         Error = False
         line_num = 0
+        tag_stack = []
+        while_stack = []
         for line in characters:
             tokens = imp_lex(line)            
             line_num += 1
@@ -345,7 +380,7 @@ if __name__ == '__main__':
                 terms.append(token)
 
                 while True:
-                    new_not_terms = next_items(terms, not_term, generator, operation_generator)
+                    new_not_terms = next_items(terms, not_term, generator, operation_generator, tag_stack, while_stack)
                     del not_term[0]
                     for number in range(len(new_not_terms)):
                         not_term.insert(number, new_not_terms[number])
