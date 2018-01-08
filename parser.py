@@ -49,6 +49,7 @@ def generator_end(generator, operation_generator, tag_stack, while_stack):
     global else_flag
     global if_end_flag
     global while_flag 
+    global num_while
 
     for i in range(len(operation_generator)):
         generator.append(operation_generator.pop())
@@ -61,8 +62,8 @@ def generator_end(generator, operation_generator, tag_stack, while_stack):
     if len(while_flag) != 0:
         end_of_while(generator, tag_stack, while_stack)
         while_flag.pop()
-    if len(while_stack) == num_while:
-        put_while_end_poistion(generator, while_stack, num_while)
+    if len(while_stack) == num_while and num_while != 0:
+        put_while_end_poistion(generator, while_stack)
     operation_generator.clear()
 
 def end_of_while(generator, tag_stack, while_stack):
@@ -71,10 +72,12 @@ def end_of_while(generator, tag_stack, while_stack):
     generator.append(('j', 'RESERVED'))
     while_stack.append(len(generator))
 
-def put_while_end_poistion(generator, while_stack, num_while):
+def put_while_end_poistion(generator, while_stack):
+    global num_while
     for i in range(num_while):
         position = generator.index(('while_tag1', 'RESERVED'))
         generator[position] = ('while_tag1', while_stack.pop())
+    num_while = 0
 
 def if_required(generator, operation_generator):
     generator_new_item(generator,operation_generator, ('tag2', 'go_next'))
