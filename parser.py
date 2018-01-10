@@ -1,7 +1,7 @@
 
 import sys
 from imp_lexer import *
-# from rpn import *    
+from rpn import *    
 global else_flag
 global if_flag
 global if_end_flag
@@ -69,7 +69,7 @@ def generator_end(generator, operation_generator, tag_stack, while_stack):
 def end_of_while(generator, tag_stack, while_stack):
     position = generator.index(('while_tag1', 'RESERVED'))
     generator.append(('while_tag2', tag_stack.pop()))
-    generator.append(('j', 'RESERVED'))
+    generator.append(('j', 'OPERATION'))
     while_stack.append(len(generator))
 
 def put_while_end_poistion(generator, while_stack):
@@ -81,7 +81,7 @@ def put_while_end_poistion(generator, while_stack):
 
 def if_required(generator, operation_generator):
     generator_new_item(generator,operation_generator, ('tag2', 'go_next'))
-    generator_new_item(generator,operation_generator, ('j', 'RESERVED'))
+    generator_new_item(generator,operation_generator, ('j', 'OPERATION'))
     
 def end_of_if(generator):
     position = generator.index(('tag1', 'RESERVED'))
@@ -159,11 +159,11 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         if term[0][0] == '{':
             return ['A','Q', 'endOfBody']
         elif term[0][0] == 'if':
-            operation_generator.append(('jf', 'RESERVED'))
+            operation_generator.append(('jf', 'OPERATION'))
             operation_generator.append(('tag1', 'RESERVED'))
             return ['C', 'A', 'E', 'Z']
         elif term[0][0] == 'while':
-            operation_generator.append(('jf', 'RESERVED'))
+            operation_generator.append(('jf', 'OPERATION'))
             operation_generator.append(('while_tag1', 'RESERVED'))
             if_flag.append(1)
             while_flag.append(1)
@@ -229,7 +229,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         elif term[0][1] == '+':
             return ['G','V', 'U']
         elif term[0][1] == '-':
-            operation_generator.append(('unary_minus', 'RESERVED'))
+            operation_generator.append(('unary_minus', 'UNARY'))
             return ['G','V', 'U']
         else:
             return ['Error', term]
@@ -268,7 +268,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         elif term[0][0] == '+': #todo
             return ['G', 'V', 'U']
         elif term[0][0] == '-':
-            operation_generator.append(('unary_minus', 'RESERVED'))
+            operation_generator.append(('unary_minus', 'UNARY'))
             return ['G', 'V', 'U']
         else:
             return ['Error', term]
@@ -294,7 +294,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         elif term[0][0] == '+':
             return ['G', 'V']
         elif term[0][0] == '-':
-            operation_generator.append(('unary_minus', 'RESERVED'))
+            operation_generator.append(('unary_minus', 'UNARY'))
             return ['G', 'V']
         else:
             return ['Error', term]
@@ -320,7 +320,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         elif term[0][0] == '+':
             return ['G', 'V']
         elif term[0][0] == '-':
-            operation_generator.append(('unary_minus', 'RESERVED'))
+            operation_generator.append(('unary_minus', 'UNARY'))
             return ['G', 'V']
         else:
             return ['Error', term]
@@ -404,4 +404,5 @@ if __name__ == '__main__':
                     Error = True
                     break
                 a = [[('a', 'ID')], ('b', 'ID'), [('num', 'RESERVED')]]
+    # take_tokens(generator)
     print(generator)

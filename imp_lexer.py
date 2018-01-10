@@ -1,28 +1,30 @@
 
 import lexer
 
-RESERVED = 'RESERVED'
-INT      = 'INT'
-ID       = 'ID'
+RESERVED  = 'RESERVED'
+INT       = 'INT'
+ID        = 'ID'
+OPERATION = 'OPERATION'
+
 
 token_exprs = [
     (r'[ \n\t]+',              None),
     (r'#[^\n]*',               None),
-    (r'\:=',                   RESERVED),
+    (r'\:=',                   OPERATION),
     (r'\(',                    RESERVED),
     (r'\)',                    RESERVED),
     (r';',                     RESERVED),
     (r',',                     RESERVED),
-    (r'\+',                    RESERVED),
-    (r'-',                     RESERVED),
-    (r'\*',                    RESERVED),
-    (r'/',                     RESERVED),
-    (r'<=',                    RESERVED),
-    (r'<',                     RESERVED),
-    (r'>=',                    RESERVED),
-    (r'>',                     RESERVED),
-    (r'!=',                    RESERVED),
-    (r'=',                     RESERVED),
+    (r'\+',                    OPERATION),
+    (r'-',                     OPERATION),
+    (r'\*',                    OPERATION),
+    (r'/',                     OPERATION),
+    (r'<=',                    OPERATION),
+    (r'<',                     OPERATION),
+    (r'>=',                    OPERATION),
+    (r'>',                     OPERATION),
+    (r'!=',                    OPERATION),
+    (r'=',                     OPERATION),
     (r'\[',                    RESERVED),
     (r'\]',                    RESERVED),
     (r'if',                    RESERVED),
@@ -36,8 +38,8 @@ token_exprs = [
     (r'mtx',                   RESERVED),
     (r'out',                   RESERVED),
     (r'in',                    RESERVED),
-    (r'mem1',                  RESERVED),
-    (r'mem2',                  RESERVED),
+    (r'mem1',                  OPERATION),
+    (r'mem2',                  OPERATION),
     (r'[0-9]+',                INT),
     (r'[A-Za-z][A-Za-z0-9_]*', ID),
 ]
