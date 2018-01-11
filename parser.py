@@ -404,5 +404,5 @@ if __name__ == '__main__':
                     Error = True
                     break
                 a = [[('a', 'ID')], ('b', 'ID'), [('num', 'RESERVED')]]
-    # take_tokens(generator)
     print(generator)
+    take_tokens(generator)
