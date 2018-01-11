@@ -116,6 +116,7 @@ def execute(operation, stack, variables):
         op1 = variables[op1[0]].get() 
 
         
+        
     if operation[0] == '+':
         return (True, (op1 + op2, 'INT'))
     if operation[0] == '-':
