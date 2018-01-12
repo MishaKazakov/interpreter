@@ -1,4 +1,3 @@
-
 import sys
 from imp_lexer import *
 from rpn import *    
@@ -45,7 +44,7 @@ def generator_new_item(generator,operation_generator, term):
         else:
             operation_generator.append(term)
 
-def generator_end(generator, operation_generator, tag_stack, while_stack):
+def generator_end(generator, operation_generator, tag_stack, while_stack, put_end):
     global else_flag
     global if_end_flag
     global while_flag 
@@ -59,7 +58,7 @@ def generator_end(generator, operation_generator, tag_stack, while_stack):
     if len(if_end_flag) != 0:
         end_of_if(generator)
         if_end_flag.pop()
-    if len(while_flag) != 0:
+    if len(while_flag) != 0 and put_end:
         end_of_while(generator, tag_stack, while_stack)
         while_flag.pop()
     if len(while_stack) == num_while and num_while != 0:
@@ -123,13 +122,13 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
             return ['Error', term]
     elif not_term[0] == 'endOfBody':
         if term[0][0] == '}':
-            generator_end(generator, operation_generator, tag_stack, while_stack)
+            generator_end(generator, operation_generator, tag_stack, while_stack, True)
             return ['deleteTerm']
         else:
             return ['Error', 'not closed bracket']
     elif not_term[0] == 'endOfMain':
         if term[0][0] == '}':
-            generator_end(generator, operation_generator, tag_stack, while_stack)
+            generator_end(generator, operation_generator, tag_stack, while_stack, False)
             return ['end']
         else:
             return ['Error', 'not closed bracket in the main']
@@ -146,7 +145,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         elif len(term) == 1 and term[0][0] == ',':
             return ['getNext', 'M']
         elif term[0][0] == ';':
-            generator_end(generator, operation_generator, tag_stack, while_stack)
+            generator_end(generator, operation_generator, tag_stack, while_stack, False)
             #rpn execute
             return ['deleteTerm']
         else:
@@ -204,7 +203,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
             return ['Error', 'assignment']
     elif not_term[0] == 'Q':
         if term[0][0] == ';':
-            generator_end(generator, operation_generator, tag_stack, while_stack)
+            generator_end(generator, operation_generator, tag_stack, while_stack, False)
             return ['A', 'Q']
         else:
             return ['tryNextTerm']
@@ -343,6 +342,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
             return ['tryNextTerm']
     elif not_term[0] == 'K':
         if term[0][0] == ']':
+            generator.append(('I', 'OPERATION'))
             return ['deleteTerm']
         elif term[0][0] == ',':
             return ['S', 'square_bracket']
@@ -350,6 +350,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
             return ['Error', term]
     elif not_term[0] == 'square_bracket':
         if term[0][0] == ']':
+            generator.append(('I2', 'OPERATION'))
             return ['deleteTerm']
         else:
             return ['Error', term]
@@ -405,4 +406,4 @@ if __name__ == '__main__':
                     break
                 a = [[('a', 'ID')], ('b', 'ID'), [('num', 'RESERVED')]]
     print(generator)
-    take_tokens(generator)
+    #take_tokens(generator)
