@@ -1,5 +1,5 @@
 import sys
-from imp_lexer import *
+from pep_lexer import *
 from rpn import *    
 global else_flag
 global if_flag
@@ -16,7 +16,7 @@ def get_priority(priorities_list,op):
 def priorities(op1, op2):
     priorities_list = [
         ['*','/'],
-        ['+', '-'],
+        ['+', '-', 'unary_minus'],
         ['('],[')'],
         [':=', 'mem1', 'mem2'],
         ['<', '>', '=', '!='],
@@ -237,7 +237,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         elif term[0][1] == '+':
             return ['G','V', 'U']
         elif term[0][1] == '-':
-            operation_generator.append(('unary_minus', 'UNARY'))
+            operation_generator.append(('unary_minus',  'OPERATION'))
             return ['G','V', 'U']
         else:
             return ['Error', term]
@@ -276,7 +276,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         elif term[0][0] == '+': #todo
             return ['G', 'V', 'U']
         elif term[0][0] == '-':
-            operation_generator.append(('unary_minus', 'UNARY'))
+            operation_generator.append(('unary_minus',  'OPERATION'))
             return ['G', 'V', 'U']
         else:
             return ['Error', term]
@@ -302,7 +302,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         elif term[0][0] == '+':
             return ['G', 'V']
         elif term[0][0] == '-':
-            operation_generator.append(('unary_minus', 'UNARY'))
+            operation_generator.append(('unary_minus',  'OPERATION'))
             return ['G', 'V']
         else:
             return ['Error', term]
@@ -328,7 +328,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         elif term[0][0] == '+':
             return ['G', 'V']
         elif term[0][0] == '-':
-            operation_generator.append(('unary_minus', 'UNARY'))
+            operation_generator.append(('unary_minus',  'OPERATION'))
             return ['G', 'V']
         else:
             return ['Error', term]

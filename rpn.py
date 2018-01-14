@@ -5,8 +5,7 @@ class Variable:
     def set(self, num):
         self.num = num
     def get(self):
-        return self.num
-    
+        return self.num    
 
 class ArrPassport:
     def __init__(self):
@@ -191,6 +190,18 @@ def execute(operation, stack, variables):
             print(op[0])
             return
 
+    if operation[0] == 'unary_minus':
+        op = stack.pop()
+        if isinstance(op, Variable):
+            op.set(-op.get())
+        elif op[1] == 'INT':
+            op = (-op[0], 'INT')
+        elif op[1] == 'ID':
+            if op[0] in variables:
+                variables[op[0]].set(-variables[op[0]].get())
+        stack.append(op)
+        return
+
     op2 = stack.pop()
     op1 = stack.pop()
     if operation[0] == ':=':
@@ -211,14 +222,14 @@ def execute(operation, stack, variables):
                 return ('Error')
         if op1[1] == 'INT':
             return ('Error', 'assigment to constant')
-        if op1[0] in variables:     
+        if op1[0] in variables:   
             if isinstance(op2, Variable):
                 variables[op1[0]].set(op2.get())
                 return 
             elif op2[1] == 'INT':
                 variables[op1[0]].set(int(op2[0]))
                 return
-            elif op2 == 'ID':
+            elif op2[1] == 'ID':
                 if op2[0] in variables:
                     variables[op1[0]].set(variables[op2[0]].get())
                 else:
@@ -238,6 +249,7 @@ def execute(operation, stack, variables):
         if not op1[0] in variables:
             return ('Error', 'used uninitialized variable ' + op1[0])
         op1 = variables[op1[0]].get() 
+
     if isinstance(op2, Variable):
         op2 = op2.get()
     elif op2[1] == 'INT':

@@ -1,0 +1,8 @@
+ 
+num a, b, x;
+{
+    in a;
+    in b;
+    x := -b/a;
+    out x
+}
