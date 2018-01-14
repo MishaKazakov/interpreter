@@ -1,26 +1,3 @@
-# вот здесь вам нужно сделать исполнитель
-# на вход он получит список
-# например,
-# [('a', 'ID'), ('b', 'ID'), ('num', 'RESERVED'), ('a', 'ID'), ('3', 'INT'), ('<', 'RESERVED'), ('tag1', 11), ('jf', 'RESERVED'), ('b', 'ID'), ('4', 'INT'), (':=', 'RESERVED')]
-# первые три это объявления переменных. 
-# с 4 по 8 начало условия.
-# ('tag1', 11) -- это то куда нужно перейти в польской строке, если ложно
-# ('b', 'ID'), ('4', 'INT'), (':=', 'RESERVED')
-# переменной b присваивается зачение четыре 
-# и далее как это обычно происходит в обратной полськой строке
-# здесь [('a', 'ID')] -- это имя переменной при обявлении нужно следить,
-# что это простая переменная -- num
-# массив -- arr
-# двумерный массив -- mtx
-
-# здесь нужно подумать я не до конца уверен, но можно
-# сделать так
-# хранение переменных в словарях 
-# пример для обыковенных переменных
-# variables = {'var_name': 4, 'num_lines': 3}
-
-# для массивов создать класс массивов, где будут храниться
-# паспорта и значения 
 import sys
 class Variable:
     def __init__(self):
@@ -55,7 +32,38 @@ class ArrPassport:
     def set_element(self, pos, num):
         self.arr[pos].set(num)
 
+class MtxPassport:
+    def __init__(self):
+        self.mtx = []
+        self.row = 0
+        self.column = 0
+    
+    def set_size(self, row, column):
+        self.row = row
+        self.column = column
+        for i in range(row):
+            arr = ArrPassport()
+            arr.set_size(self.column)
+            self.mtx.append(arr)
+    
+    def get_element(self, row, column):
+        return self.mtx[row].get_element(column)
+
+def get_value(op, variables):
+    if isinstance(op, Variable):
+        op = op.get()
+    elif op[1] == 'INT':
+        op = int(op[0])
+    elif op[1] == 'ID':
+        if op[0] in variables:
+            op = variables[op[0]].get()
+        else:
+            return ('Error', 'used uninitialized variable ' + op[0])
+    return op
+
 def execute(operation, stack, variables):
+    # print(stack)
+    # print(operation)
     if operation[0] == 'num': #иницаилизация
         for i in range(len(stack)):
             elem = stack.pop()
@@ -72,9 +80,17 @@ def execute(operation, stack, variables):
             variables[elem[0]] = ArrPassport()     
         return
 
+    if operation[0] == 'mtx':
+        for i in range(len(stack)):
+            elem = stack.pop()
+            if elem[0] in variables:
+                return ('Error')
+            variables[elem[0]] = MtxPassport()     
+        return
+
     if operation[0] == 'mem1':
         lenght = stack.pop()
-        lenght = int(lenght[0])
+        lenght = get_value(lenght, variables)
         var = stack.pop()
         if var[0] in variables:
             if isinstance(variables[var[0]], ArrPassport):
@@ -82,13 +98,29 @@ def execute(operation, stack, variables):
                 var.set_size(lenght)
                 return
             else:
-                return ('Error', 'using non array variable' + var[0])
+                return ('Error', 'using non array variable ' + var[0])
         else:
             return ('Error', 'used uninitialized variable ' + var[0])
-
+    
+    if operation[0] == 'mem2':
+        column = stack.pop()
+        column = int(column[0])
+        row = stack.pop()
+        row = int(row[0])
+        var = stack.pop()
+        if var[0] in variables:
+            if isinstance(variables[var[0]], MtxPassport):
+                var = variables[var[0]]
+                var.set_size(row, column)
+                return
+            else:
+                return ('Error', 'using non array variable ' + var[0])
+        else:
+            return ('Error', 'used uninitialized variable ' + var[0])
+    
     if operation[0] == 'I':
         pos = stack.pop()
-        pos = int(pos[0])
+        pos = get_value(pos, variables)
         var = stack.pop()
         if var[0] in variables:
             if isinstance(variables[var[0]], ArrPassport):
@@ -96,10 +128,26 @@ def execute(operation, stack, variables):
                 stack.append(var.get_element(pos))
                 return
             else:
-                return ('Error', 'using non array variable' + var[0])
+                return ('Error', 'using non array variable ' + var[0])
         else:
             return ('Error', 'used uninitialized variable ' + var[0])
-    
+
+    if operation[0] == 'I2':
+        column = stack.pop()
+        column = int(column[0])
+        row = stack.pop()
+        row = int(row[0])
+        var = stack.pop()
+        if var[0] in variables:
+            if isinstance(variables[var[0]], MtxPassport):
+                var = variables[var[0]]
+                stack.append(var.get_element(row,column))
+                return
+            else:
+                return ('Error', 'using non array variable ' + var[0])
+        else:
+            return ('Error', 'used uninitialized variable ' + var[0])
+
     if operation[0] == 'jf':
         tag = stack.pop()
         res = stack.pop()
@@ -119,6 +167,7 @@ def execute(operation, stack, variables):
         op = stack.pop()
         if isinstance(op, Variable):
             op.set(mode)
+            return
         elif op[1] == 'ID':
             if op[0] in variables:
                 variables[op[0]].set(mode)
@@ -127,7 +176,6 @@ def execute(operation, stack, variables):
                 return ('Error', 'used uninitialized variable ' + op[0])
         else:
             return ('Error', 'wrong input')
-    
     if operation[0] == 'out':
         op = stack.pop()
         if isinstance(op, Variable):
@@ -153,16 +201,17 @@ def execute(operation, stack, variables):
             elif op2[1] == 'INT':
                 op1.set(int(op2[0]))
                 return
-            elif op2 == 'ID':
+            elif op2[1] == 'ID':           
                 if op2[0] in variables:
                     op1.set(variables[op2[0]].get())
+                    return
                 else:
                     return ('Error', 'used uninitialized variable ' + op2[0])
             else:
                 return ('Error')
         if op1[1] == 'INT':
             return ('Error', 'assigment to constant')
-        if op1[0] in variables:
+        if op1[0] in variables:     
             if isinstance(op2, Variable):
                 variables[op1[0]].set(op2.get())
                 return 
@@ -189,9 +238,8 @@ def execute(operation, stack, variables):
         if not op1[0] in variables:
             return ('Error', 'used uninitialized variable ' + op1[0])
         op1 = variables[op1[0]].get() 
-
     if isinstance(op2, Variable):
-        op2 = op1.get()
+        op2 = op2.get()
     elif op2[1] == 'INT':
         op2 = int(op2[0]) 
     elif op2[1] == 'ID':
@@ -252,6 +300,9 @@ def take_tokens(tokens): #освновная функция, которой бу
             if res:
                 if res[0] == 'jump':
                     i = res[1] -1
+                elif res[0] == 'Error':
+                    print(res[1])
+                    break
         else:
             stack.append(tokens[i])
         i +=1

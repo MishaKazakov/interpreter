@@ -6,6 +6,7 @@ global if_flag
 global if_end_flag
 global while_flag
 global num_while
+global stack_len
 
 def get_priority(priorities_list,op):
     for i in range(len(priorities_list)):
@@ -18,7 +19,8 @@ def priorities(op1, op2):
         ['+', '-'],
         ['('],[')'],
         [':=', 'mem1', 'mem2'],
-        ['<', '>', '=', '!=', 'jf', 'j', 'tag1', 'tag2', 'while_tag1', 'while_tag2']
+        ['<', '>', '=', '!='],
+        ['jf', 'j', 'tag1', 'tag2', 'while_tag1', 'while_tag2'],
     ]
     priority1 = get_priority(priorities_list, op1)
     priority2 = get_priority(priorities_list, op2)
@@ -49,6 +51,7 @@ def generator_end(generator, operation_generator, tag_stack, while_stack, put_en
     global if_end_flag
     global while_flag 
     global num_while
+    global stack_len
 
     for i in range(len(operation_generator)):
         generator.append(operation_generator.pop())
@@ -58,10 +61,10 @@ def generator_end(generator, operation_generator, tag_stack, while_stack, put_en
     if len(if_end_flag) != 0:
         end_of_if(generator)
         if_end_flag.pop()
-    if len(while_flag) != 0 and put_end:
+    elif len(while_flag) != 0 and put_end and stack_len <= num_while:
         end_of_while(generator, tag_stack, while_stack)
         while_flag.pop()
-    if len(while_stack) == num_while and num_while != 0:
+    elif len(while_stack) == num_while and num_while != 0:
         put_while_end_poistion(generator, while_stack)
     operation_generator.clear()
 
@@ -71,7 +74,7 @@ def end_of_while(generator, tag_stack, while_stack):
     generator.append(('j', 'OPERATION'))
     while_stack.append(len(generator))
 
-def put_while_end_poistion(generator, while_stack):
+def put_while_end_poistion(generator, while_stack): # better in the end of whole program
     global num_while
     for i in range(num_while):
         position = generator.index(('while_tag1', 'RESERVED'))
@@ -101,11 +104,14 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
     global if_end_flag
     global while_flag
     global num_while
+    global stack_len
+
     if not_term[0] == 'P':
         else_flag = []
         if_end_flag = []
         if_flag = []
         while_flag = []
+        stack_len = 0
         num_while = 0
         if term[0][0] == 'num':
             operation_generator.append(term[0])
@@ -122,6 +128,7 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
             return ['Error', term]
     elif not_term[0] == 'endOfBody':
         if term[0][0] == '}':
+            stack_len -= 1
             generator_end(generator, operation_generator, tag_stack, while_stack, True)
             return ['deleteTerm']
         else:
@@ -156,8 +163,10 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
                 generator.append(operation_generator.pop())
             if_flag.pop()
         if term[0][0] == '{':
+            stack_len += 1
             return ['A','Q', 'endOfBody']
         elif term[0][0] == 'if':
+            stack_len += 1
             operation_generator.append(('jf', 'OPERATION'))
             operation_generator.append(('tag1', 'RESERVED'))
             return ['C', 'A', 'E', 'Z']
@@ -342,6 +351,8 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
             return ['tryNextTerm']
     elif not_term[0] == 'K':
         if term[0][0] == ']':
+            if len(operation_generator) > 1 and operation_generator[len(operation_generator) - 1][0] == '+':
+                generator.append(operation_generator.pop())
             generator.append(('I', 'OPERATION'))
             return ['deleteTerm']
         elif term[0][0] == ',':
