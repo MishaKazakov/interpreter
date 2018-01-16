@@ -1,5 +1,6 @@
 import sys
-from pep_lexer import *
+#from pep_lexer import *
+from new_lexer import *
 from rpn import *    
 global else_flag
 global if_flag
@@ -384,7 +385,7 @@ if __name__ == '__main__':
         tag_stack = []
         while_stack = []
         for line in characters:
-            tokens = imp_lex(line)            
+            tokens = lex(line)            
             line_num += 1
             for token in tokens:  
                 try_next_term_flag = True      
