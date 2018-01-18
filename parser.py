@@ -1,5 +1,4 @@
 import sys
-#from pep_lexer import *
 from lexer import *
 from rpn import *    
 global else_flag
@@ -31,7 +30,7 @@ def priorities(op1, op2):
     else:
         return False
 
-def generator_new_item(generator,operation_generator, term):
+def generator_new_item(generator,operation_generator, term): #сортировочная станция
     if term[0] == ')':
         prev_term = operation_generator.pop()
         while prev_term[0] != '(':
@@ -56,7 +55,7 @@ def generator_end(generator, operation_generator, tag_stack, while_stack, put_en
 
     for i in range(len(operation_generator)):
         generator.append(operation_generator.pop())
-    if len(else_flag) != 0:
+    if len(else_flag) != 0 and put_end:
         after_else(generator)
         else_flag.pop()
     if len(if_end_flag) != 0:
@@ -370,8 +369,6 @@ def next_items(term, not_term,generator, operation_generator, tag_stack, while_s
         return ['tryNextTerm']
     return ['Error', term]
 
-
-
 if __name__ == '__main__':
     generator = []
     operation_generator = [] 
@@ -395,7 +392,7 @@ if __name__ == '__main__':
                     terms = []
                 terms.append(token)
 
-                while True:
+                while True: #пока не получит нетерменал
                     new_not_terms = next_items(terms, not_term, generator, operation_generator, tag_stack, while_stack)
                     del not_term[0]
                     for number in range(len(new_not_terms)):
@@ -416,6 +413,5 @@ if __name__ == '__main__':
                     print('Error in line',line_num, ' with ' ,not_term[1])
                     Error = True
                     break
-                a = [[('a', 'ID')], ('b', 'ID'), [('num', 'RESERVED')]]
     #print(generator)
     take_tokens(generator)

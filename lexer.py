@@ -138,7 +138,6 @@ def exit(pos, characters):
     sys.stderr.write('Illegal character:' + characters[pos] + ' at ' + str(pos) + '\n')
     sys.exit(1)  
 
-
 if __name__ == '__main__':
     filename = sys.argv[1]
     with open(filename) as characters:

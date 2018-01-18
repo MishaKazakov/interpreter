@@ -2,6 +2,7 @@ num a, b;
 {
     in a;
     if a = 0 {
+        a := 3;
         out a
     } else {
         b:= 132;
