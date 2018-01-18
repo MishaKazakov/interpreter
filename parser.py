@@ -1,6 +1,6 @@
 import sys
 #from pep_lexer import *
-from new_lexer import *
+from lexer import *
 from rpn import *    
 global else_flag
 global if_flag

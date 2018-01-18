@@ -1,15 +1,10 @@
-num a, b, x, i, fib;
+num a, b;
 {
-    a := 0;
-    b := 1;
-    fib := 1;
-    in x;
-    i:=1;
-    while i < x {
-        fib := a + b;
-        out fib;
-        a := b;
-        b := fib;
-        i := i + 1 
+    in a;
+    if a = 0 {
+        out a
+    } else {
+        b:= 132;
+        out b
     }
 }
